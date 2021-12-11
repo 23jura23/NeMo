@@ -16,3 +16,19 @@ val_ds:
     shuffle: false
     batch_size: 16
     num_workers: 1
+
+trainer:
+  gpus: -1 # number of gpus
+  num_nodes: 1
+  accelerator: ddp
+  checkpoint_callback: False  # Provided by exp_manager
+  logger: False  # Provided by exp_manager
+
+exp_manager:
+  exp_dir: null
+  name: ${name}
+  create_tensorboard_logger: True
+  create_checkpoint_callback: True
+  checkpoint_callback_params:
+    monitor: "val_loss"
+    mode: "min"
