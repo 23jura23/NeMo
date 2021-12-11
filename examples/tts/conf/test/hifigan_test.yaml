@@ -1,11 +1,12 @@
 name: "HifiGan Test"
 
 checkpoint: ???
+test_dataset: ???
 
 val_ds:
   dataset:
     _target_: "nemo.collections.tts.data.datalayers.AudioDataset"
-    manifest_filepath: ${validation_datasets}
+    manifest_filepath: ${test_dataset}
     max_duration: null
     min_duration: null
     n_segments: -1
