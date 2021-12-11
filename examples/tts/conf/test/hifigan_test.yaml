@@ -1,4 +1,4 @@
-name: "HifiGan Test"
+name: "HifiGan"
 
 checkpoint: ???
 test_dataset: ???
