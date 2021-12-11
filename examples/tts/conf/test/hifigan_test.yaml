@@ -1,6 +1,7 @@
 name: "HifiGan"
 
 checkpoint: ???
+pretrained: False
 test_dataset: ???
 
 val_ds:

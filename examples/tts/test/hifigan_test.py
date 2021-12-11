@@ -8,7 +8,14 @@ from nemo.utils.exp_manager import exp_manager
 def main(cfg):
     trainer = pl.Trainer(**cfg.trainer)
     exp_manager(trainer, cfg.get("exp_manager", None))
-    model = HifiGanModel.restore_from(cfg.checkpoint).eval()
+    if cfg.pretrained and cfg.checkpoint is not None:
+        raise ValueError("Cannot instantiate model from pretrained and checkpoint at the same time!")
+
+    if cfg.pretrained:
+        model = HifiGanModel.from_pretrained(model_name='tts_hifigan').eval()
+    else:
+        model = HifiGanModel.restore_from(cfg.checkpoint).eval()
+
     model.setup_validation_data(cfg.val_ds)
     model.set_trainer(trainer)
     trainer.validate(model)
