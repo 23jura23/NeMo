@@ -19,7 +19,7 @@ from typing import Any, Dict
 import numpy as np
 import torch
 from hydra.utils import instantiate
-from omegaconf import MISSING, DictConfig, OmegaConf
+from omegaconf import MISSING, DictConfig, OmegaConf, open_dict, MISSING
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import LoggerCollection, TensorBoardLogger
 
@@ -253,7 +253,13 @@ class FastPitchHifiGanE2EModel(TextToWaveform):
         return output, splices, log_durs_predicted, pitch_predicted
 
     def training_step(self, batch, batch_idx, optimizer_idx):
-        audio, _, text, text_lens, durs, pitch, _ = batch
+        # audio, _, text, text_lens, durs, pitch, _ = batch
+
+
+        # if SpeakerID in self._train_dl.dataset.sup_data_types_set:
+        #     audio, audio_lens, text, text_lens, attn_prior, pitch, _, speaker = batch
+        # else:
+        audio, audio_lens, text, text_lens, attn_prior, pitch, _, durs = batch
 
         # train discriminator
         if optimizer_idx == 0:
@@ -336,7 +342,10 @@ class FastPitchHifiGanE2EModel(TextToWaveform):
             return total_loss
 
     def validation_step(self, batch, batch_idx):
-        audio, audio_lens, text, _, _, _, _ = batch
+        # audio, audio_lens, text, _, _, _, _ = batch
+
+        audio, audio_lens, text, _, _, _, _, _ = batch
+
         mels, mel_lens = self.preprocessor(audio, audio_lens)
 
         audio_pred, _, log_durs_predicted, _ = self(text=text, durs=None, pitch=None, splice=False)
@@ -387,11 +396,35 @@ class FastPitchHifiGanE2EModel(TextToWaveform):
             num_workers=cfg.get('num_workers', 16),
         )
 
+    def __setup_dataloader_from_config(self, cfg, shuffle_should_be: bool = True, name: str = "train"):
+        if "dataset" not in cfg or not isinstance(cfg.dataset, DictConfig):
+            raise ValueError(f"No dataset for {name}")
+        if "dataloader_params" not in cfg or not isinstance(cfg.dataloader_params, DictConfig):
+            raise ValueError(f"No dataloder_params for {name}")
+        if shuffle_should_be:
+            if 'shuffle' not in cfg.dataloader_params:
+                logging.warning(
+                    f"Shuffle should be set to True for {self}'s {name} dataloader but was not found in its "
+                    "config. Manually setting to True"
+                )
+                with open_dict(cfg.dataloader_params):
+                    cfg.dataloader_params.shuffle = True
+            elif not cfg.dataloader_params.shuffle:
+                logging.error(f"The {name} dataloader for {self} has shuffle set to False!!!")
+        elif not shuffle_should_be and cfg.dataloader_params.shuffle:
+            logging.error(f"The {name} dataloader for {self} has shuffle set to True!!!")
+
+        kwargs_dict = {}
+        if cfg.dataset._target_ == "nemo.collections.asr.data.audio_to_text.FastPitchDataset":
+            kwargs_dict["parser"] = self.parser
+        dataset = instantiate(cfg.dataset, **kwargs_dict)
+        return torch.utils.data.DataLoader(dataset, collate_fn=dataset.collate_fn, **cfg.dataloader_params)
+
     def setup_training_data(self, cfg):
-        self._train_dl = self._loader(cfg)
+        self._train_dl = self.__setup_dataloader_from_config(cfg)
 
     def setup_validation_data(self, cfg):
-        self._validation_dl = self._loader(cfg)
+        self._validation_dl = self.__setup_dataloader_from_config(cfg, shuffle_should_be=False, name="val")
 
     def setup_test_data(self, cfg):
         """Omitted."""
