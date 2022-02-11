@@ -32,32 +32,32 @@ model:
   train_ds:
     dataset:
       _target_: "nemo.collections.tts.torch.data.TTSDataset"
-      manifest_filepath: ${train_dataset}
-      sample_rate: ${sample_rate}
-      sup_data_path: ${sup_data_path}
-      sup_data_types: ${sup_data_types}
-      n_fft: ${model.n_window_size}
-      win_length: ${model.n_window_size}
-      hop_length: ${model.n_window_stride}
-      window: ${model.window}
-      n_mels: ${model.n_mel_channels}
-      lowfreq: ${model.lowfreq}
-      highfreq: ${model.highfreq}
+      manifest_filepath: ${fastpitch.train_dataset}
+      sample_rate: ${fastpitch.sample_rate}
+      sup_data_path: ${fastpitch.sup_data_path}
+      sup_data_types: ${fastpitch.sup_data_types}
+      n_fft: ${fastpitch.model.n_window_size}
+      win_length: ${fastpitch.model.n_window_size}
+      hop_length: ${fastpitch.model.n_window_stride}
+      window: ${fastpitch.model.window}
+      n_mels: ${fastpitch.model.n_mel_channels}
+      lowfreq: ${fastpitch.model.lowfreq}
+      highfreq: ${fastpitch.model.highfreq}
       max_duration: null
       min_duration: 0.1
       ignore_file: null
       trim: False
-      pitch_fmin: ${model.pitch_fmin}
-      pitch_fmax: ${model.pitch_fmax}
+      pitch_fmin: ${fastpitch.model.pitch_fmin}
+      pitch_fmax: ${fastpitch.model.pitch_fmax}
       pitch_norm: true
-      pitch_avg: ${model.pitch_avg}
-      pitch_std: ${model.pitch_std}
+      pitch_avg: ${fastpitch.model.pitch_avg}
+      pitch_std: ${fastpitch.model.pitch_std}
 
       text_normalizer:
         _target_: "nemo_text_processing.text_normalization.normalize.Normalizer"
         lang: "en"
         input_case: "cased"
-        whitelist: ${whitelist_path}
+        whitelist: ${fastpitch.whitelist_path}
 
       text_normalizer_call_args:
         verbose: False
@@ -87,32 +87,32 @@ model:
   validation_ds:
     dataset:
       _target_: "nemo.collections.tts.torch.data.TTSDataset"
-      manifest_filepath: ${validation_datasets}
-      sample_rate: ${sample_rate}
-      sup_data_path: ${sup_data_path}
-      sup_data_types: ${sup_data_types}
-      n_fft: ${model.n_window_size}
-      win_length: ${model.n_window_size}
-      hop_length: ${model.n_window_stride}
-      window: ${model.window}
-      n_mels: ${model.n_mel_channels}
-      lowfreq: ${model.lowfreq}
-      highfreq: ${model.highfreq}
+      manifest_filepath: ${fastpitch.validation_datasets}
+      sample_rate: ${fastpitch.sample_rate}
+      sup_data_path: ${fastpitch.sup_data_path}
+      sup_data_types: ${fastpitch.sup_data_types}
+      n_fft: ${fastpitch.model.n_window_size}
+      win_length: ${fastpitch.model.n_window_size}
+      hop_length: ${fastpitch.model.n_window_stride}
+      window: ${fastpitch.model.window}
+      n_mels: ${fastpitch.model.n_mel_channels}
+      lowfreq: ${fastpitch.model.lowfreq}
+      highfreq: ${fastpitch.model.highfreq}
       max_duration: null
       min_duration: null
       ignore_file: null
       trim: False
-      pitch_fmin: ${model.pitch_fmin}
-      pitch_fmax: ${model.pitch_fmax}
+      pitch_fmin: ${fastpitch.model.pitch_fmin}
+      pitch_fmax: ${fastpitch.model.pitch_fmax}
       pitch_norm: true
-      pitch_avg: ${model.pitch_avg}
-      pitch_std: ${model.pitch_std}
+      pitch_avg: ${fastpitch.model.pitch_avg}
+      pitch_std: ${fastpitch.model.pitch_std}
 
       text_normalizer:
         _target_: "nemo_text_processing.text_normalization.normalize.Normalizer"
         lang: "en"
         input_case: "cased"
-        whitelist: ${whitelist_path}
+        whitelist: ${fastpitch.whitelist_path}
 
       text_normalizer_call_args:
         verbose: False
@@ -141,23 +141,23 @@ model:
   preprocessor:
     _target_: nemo.collections.asr.modules.AudioToMelSpectrogramPreprocessor
     dither: 0.0
-    features: ${model.n_mel_channels}
+    features: ${fastpitch.model.n_mel_channels}
     frame_splicing: 1
-    highfreq: ${model.highfreq}
+    highfreq: ${fastpitch.model.highfreq}
     log: true
     log_zero_guard_type: add
     log_zero_guard_value: 1e-05
-    lowfreq: ${model.lowfreq}
+    lowfreq: ${fastpitch.model.lowfreq}
     mag_power: 1.0
-    n_fft: ${model.n_window_size}
-    n_window_size: ${model.n_window_size}
-    n_window_stride:  ${model.n_window_stride}
+    n_fft: ${fastpitch.model.n_window_size}
+    n_window_size: ${fastpitch.model.n_window_size}
+    n_window_stride:  ${fastpitch.model.n_window_stride}
     normalize: null
     pad_to: 1
     pad_value: 0
     preemph: null
-    sample_rate: ${sample_rate}
-    window: ${model.window}
+    sample_rate: ${fastpitch.sample_rate}
+    window: ${fastpitch.model.window}
     window_size: null
     window_stride: null
 
@@ -165,20 +165,20 @@ model:
     _target_: nemo.collections.tts.modules.transformer.FFTransformerEncoder
     n_layer: 6
     n_head: 1
-    d_model: ${model.symbols_embedding_dim}
+    d_model: ${fastpitch.model.symbols_embedding_dim}
     d_head: 64
     d_inner: 1536
     kernel_size: 3
     dropout: 0.1
     dropatt: 0.1
     dropemb: 0.0
-    d_embed: ${model.symbols_embedding_dim}
+    d_embed: ${fastpitch.model.symbols_embedding_dim}
 
   output_fft:
     _target_: nemo.collections.tts.modules.transformer.FFTransformerDecoder
     n_layer: 6
     n_head: 1
-    d_model: ${model.symbols_embedding_dim}
+    d_model: ${fastpitch.model.symbols_embedding_dim}
     d_head: 64
     d_inner: 1536
     kernel_size: 3
@@ -188,11 +188,11 @@ model:
 
   alignment_module:
     _target_: nemo.collections.tts.modules.aligner.AlignmentEncoder
-    n_text_channels: ${model.symbols_embedding_dim}
+    n_text_channels: ${fastpitch.model.symbols_embedding_dim}
 
   duration_predictor:
     _target_: nemo.collections.tts.modules.fastpitch.TemporalPredictor
-    input_size: ${model.symbols_embedding_dim}
+    input_size: ${fastpitch.model.symbols_embedding_dim}
     kernel_size: 3
     filter_size: 256
     dropout: 0.1
@@ -200,7 +200,7 @@ model:
 
   pitch_predictor:
     _target_: nemo.collections.tts.modules.fastpitch.TemporalPredictor
-    input_size: ${model.symbols_embedding_dim}
+    input_size: ${fastpitch.model.symbols_embedding_dim}
     kernel_size: 3
     filter_size: 256
     dropout: 0.1
@@ -234,7 +234,7 @@ trainer:
 
 exp_manager:
   exp_dir: null
-  name: ${name}
+  name: ${fastpitch.name}
   create_tensorboard_logger: True
   create_checkpoint_callback: True
   checkpoint_callback_params:

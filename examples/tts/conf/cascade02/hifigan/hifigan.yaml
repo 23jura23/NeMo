@@ -48,7 +48,7 @@ model:
 
 trainer:
   gpus: -1 # number of gpus
-  max_steps: ${model.max_steps}
+  max_steps: ${hifigan.model.max_steps}
   num_nodes: 1
   accelerator: ddp
   accumulate_grad_batches: 1
@@ -60,7 +60,7 @@ trainer:
 
 exp_manager:
   exp_dir: null
-  name: ${name}
+  name: ${hifigan.name}
   create_tensorboard_logger: True
   create_checkpoint_callback: True
   checkpoint_callback_params:
