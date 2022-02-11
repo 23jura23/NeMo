@@ -2,7 +2,10 @@ name: "Cascade DeepPhonemizer FastPitch HifiGan"
 
 defaults:
   - fastpitch_align@fastpitch
-  - hifigan/hifigan@hifigan
+  - fastpitch_align/model/train_ds@train_ds
+  - fastpitch_align/model/validation_ds@validation_ds
+  - hifigan/hifigan@hifigan # datasets of hifigan are not used
+
 
 trainer:
   devices: 1 # number of gpus
