@@ -652,7 +652,7 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
 
         self.l1_factor = cfg.hifigan.model.get("l1_loss_factor", 45)
 
-        self.sample_rate = self._cfg.preprocessor.sample_rate
+        self.sample_rate = self._cfg.hifigan.model.preprocessor.sample_rate
         self.stft_bias = None
 
         if self._train_dl and isinstance(self._train_dl.dataset, MelAudioDataset):
