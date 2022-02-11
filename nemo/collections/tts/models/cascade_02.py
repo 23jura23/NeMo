@@ -870,6 +870,12 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         else:
             return [self.optim_g, self.optim_d]
 
+    def convert_text_to_waveform(self, *, tokens: 'torch.tensor', **kwargs) -> 'List[torch.tensor]':
+        with torch.no_grad:
+            spec = self.generate_spectrogram(tokens)
+            audio = self.convert_spectrogram_to_audio(spec)
+            return audio
+
     @property
     def input_types(self):
         return {
