@@ -561,21 +561,21 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         # fastpitch part
 
         self.learn_alignment = False
-        if "learn_alignment" in cfg.fastpitch:
-            self.learn_alignment = cfg.fastpitch.learn_alignment
+        if "learn_alignment" in cfg.fastpitch.model:
+            self.learn_alignment = cfg.fastpitch.model.learn_alignment
 
         self._normalizer = None
         self._parser = None
         self._tb_logger = None
 
         schema = OmegaConf.structured(FastPitchConfig)
-        # ModelPT ensures that cfg.fastpitch is a DictConfig, but do this second check in case ModelPT changes
-        if isinstance(cfg.fastpitch, dict):
-            cfg.fastpitch = OmegaConf.create(cfg.fastpitch)
-        elif not isinstance(cfg.fastpitch, DictConfig):
-            raise ValueError(f"cfg.fastpitch was type: {type(cfg.fastpitch)}. Expected either a dict or a DictConfig")
-        # Ensure passed cfg.fastpitch is compliant with schema
-        OmegaConf.merge(cfg.fastpitch, schema)
+        # ModelPT ensures that cfg.fastpitch.model is a DictConfig, but do this second check in case ModelPT changes
+        if isinstance(cfg.fastpitch.model, dict):
+            cfg.fastpitch.model = OmegaConf.create(cfg.fastpitch.model)
+        elif not isinstance(cfg.fastpitch.model, DictConfig):
+            raise ValueError(f"cfg.fastpitch.model was type: {type(cfg.fastpitch.model)}. Expected either a dict or a DictConfig")
+        # Ensure passed cfg.fastpitch.model is compliant with schema
+        OmegaConf.merge(cfg.fastpitch.model, schema)
 
         self.bin_loss_warmup_epochs = 100
         self.log_train_images = False
@@ -583,10 +583,10 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         loss_scale = 0.1 if self.learn_alignment else 1.0
         dur_loss_scale = loss_scale
         pitch_loss_scale = loss_scale
-        if "dur_loss_scale" in cfg.fastpitch:
-            dur_loss_scale = cfg.fastpitch.dur_loss_scale
-        if "pitch_loss_scale" in cfg.fastpitch:
-            pitch_loss_scale = cfg.fastpitch.pitch_loss_scale
+        if "dur_loss_scale" in cfg.fastpitch.model:
+            dur_loss_scale = cfg.fastpitch.model.dur_loss_scale
+        if "pitch_loss_scale" in cfg.fastpitch.model:
+            pitch_loss_scale = cfg.fastpitch.model.pitch_loss_scale
 
         self.mel_loss = MelLoss()
         self.pitch_loss = PitchLoss(loss_scale=pitch_loss_scale)
@@ -595,33 +595,33 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         input_fft_kwargs = {}
         self.aligner = None
         if self.learn_alignment:
-            self.aligner = instantiate(self._cfg.fastpitch.alignment_module)
+            self.aligner = instantiate(self._cfg.fastpitch.model.alignment_module)
             self.forward_sum_loss = ForwardSumLoss()
             self.bin_loss = BinLoss()
 
-            self.ds_class_name = self._cfg.fastpitch.train_ds.dataset._target_.split(".")[-1]
+            self.ds_class_name = self._cfg.fastpitch.model.train_ds.dataset._target_.split(".")[-1]
 
             if self.ds_class_name == "AudioToCharWithPriorAndPitchDataset":
                 logging.warning(
                     "AudioToCharWithPriorAndPitchDataset will be deprecated in 1.8 version. "
                     "Please change your model to use Torch TTS Collection instead (e.g. see nemo.collections.tts.torch.data.TTSDataset)."
                 )
-                self.vocab = AudioToCharWithDursF0Dataset.make_vocab(**self._cfg.fastpitch.train_ds.dataset.vocab)
+                self.vocab = AudioToCharWithDursF0Dataset.make_vocab(**self._cfg.fastpitch.model.train_ds.dataset.vocab)
                 input_fft_kwargs["n_embed"] = len(self.vocab.labels)
                 input_fft_kwargs["padding_idx"] = self.vocab.pad
             elif self.ds_class_name == "TTSDataset":
-                self.vocab = instantiate(self._cfg.fastpitch.train_ds.dataset.text_tokenizer)
+                self.vocab = instantiate(self._cfg.fastpitch.model.train_ds.dataset.text_tokenizer)
                 input_fft_kwargs["n_embed"] = len(self.vocab.tokens)
                 input_fft_kwargs["padding_idx"] = self.vocab.pad
             else:
                 raise ValueError(f"Unknown dataset class: {self.ds_class_name}")
 
-        self.preprocessor = instantiate(self._cfg.fastpitch.preprocessor)
+        self.preprocessor = instantiate(self._cfg.fastpitch.model.preprocessor)
 
-        input_fft = instantiate(self._cfg.fastpitch.input_fft, **input_fft_kwargs)
-        output_fft = instantiate(self._cfg.fastpitch.output_fft)
-        duration_predictor = instantiate(self._cfg.fastpitch.duration_predictor)
-        pitch_predictor = instantiate(self._cfg.fastpitch.pitch_predictor)
+        input_fft = instantiate(self._cfg.fastpitch.model.input_fft, **input_fft_kwargs)
+        output_fft = instantiate(self._cfg.fastpitch.model.output_fft)
+        duration_predictor = instantiate(self._cfg.fastpitch.model.duration_predictor)
+        pitch_predictor = instantiate(self._cfg.fastpitch.model.pitch_predictor)
 
         self.fastpitch = FastPitchModule(
             input_fft,
@@ -629,28 +629,28 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
             duration_predictor,
             pitch_predictor,
             self.aligner,
-            cfg.fastpitch.n_speakers,
-            cfg.fastpitch.symbols_embedding_dim,
-            cfg.fastpitch.pitch_embedding_kernel_size,
-            cfg.fastpitch.n_mel_channels,
+            cfg.fastpitch.model.n_speakers,
+            cfg.fastpitch.model.symbols_embedding_dim,
+            cfg.fastpitch.model.pitch_embedding_kernel_size,
+            cfg.fastpitch.model.n_mel_channels,
         )
         self._input_types = self._output_types = None
 
         # hifigan part
 
-        self.audio_to_melspec_precessor = instantiate(cfg.hifigan.preprocessor)
+        self.audio_to_melspec_precessor = instantiate(cfg.hifigan.model.preprocessor)
         # use a different melspec extractor because:
         # 1. we need to pass grads
         # 2. we need remove fmax limitation
-        self.trg_melspec_fn = instantiate(cfg.hifigan.preprocessor, highfreq=None, use_grads=True)
-        self.generator = instantiate(cfg.hifigan.generator)
-        self.mpd = MultiPeriodDiscriminator(debug=cfg.hifigan.debug if "debug" in cfg.hifigan else False)
-        self.msd = MultiScaleDiscriminator(debug=cfg.hifigan.debug if "debug" in cfg.hifigan else False)
+        self.trg_melspec_fn = instantiate(cfg.hifigan.model.preprocessor, highfreq=None, use_grads=True)
+        self.generator = instantiate(cfg.hifigan.model.generator)
+        self.mpd = MultiPeriodDiscriminator(debug=cfg.hifigan.model.debug if "debug" in cfg.hifigan.model else False)
+        self.msd = MultiScaleDiscriminator(debug=cfg.hifigan.model.debug if "debug" in cfg.hifigan.model else False)
         self.feature_loss = FeatureMatchingLoss()
         self.discriminator_loss = DiscriminatorLoss()
         self.generator_loss = GeneratorLoss()
 
-        self.l1_factor = cfg.hifigan.get("l1_loss_factor", 45)
+        self.l1_factor = cfg.hifigan.model.get("l1_loss_factor", 45)
 
         self.sample_rate = self._cfg.preprocessor.sample_rate
         self.stft_bias = None
@@ -828,7 +828,7 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
     # common functions
 
     def configure_optimizers(self):
-# here should go all of fastpitch modules with weights        self.optim_fp = instantiate(self._cfg.fastpitch.optim, params=itertools.chain(self.aligner.parameters(), self.fastpitch.parameters()))
+# here should go all of fastpitch modules with weights        self.optim_fp = instantiate(self._cfg.fastpitch.model.optim, params=itertools.chain(self.aligner.parameters(), self.fastpitch.parameters()))
 
         g_params = []
 
@@ -838,20 +838,20 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         g_params.append(self.fastpitch.parameters())
         g_params.append(self.generator.parameters())
 
-        self.optim_g = instantiate(self._cfg.hifigan.optim, params=itertools.chain(*g_params))
+        self.optim_g = instantiate(self._cfg.hifigan.model.optim, params=itertools.chain(*g_params))
         self.optim_d = instantiate(
-            self._cfg.hifigan.optim, params=itertools.chain(self.msd.parameters(), self.mpd.parameters()),
+            self._cfg.hifigan.model.optim, params=itertools.chain(self.msd.parameters(), self.mpd.parameters()),
         )
 
-        if hasattr(self._cfg.hifigan, 'sched'):
-            max_steps = self._cfg.hifigan.get("max_steps", None)
+        if hasattr(self._cfg.hifigan.model, 'sched'):
+            max_steps = self._cfg.hifigan.model.get("max_steps", None)
             if max_steps is None or max_steps < 0:
                 max_steps = self._get_max_steps()
 
             warmup_steps = self._get_warmup_steps(max_steps)
 
             self.scheduler_g = CosineAnnealing(
-                optimizer=self.optim_g, max_steps=max_steps, min_lr=self._cfg.hifigan.sched.min_lr, warmup_steps=warmup_steps,
+                optimizer=self.optim_g, max_steps=max_steps, min_lr=self._cfg.hifigan.model.sched.min_lr, warmup_steps=warmup_steps,
             )  # Use warmup to delay start
             sch1_dict = {
                 'scheduler': self.scheduler_g,
@@ -859,7 +859,7 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
             }
 
             self.scheduler_d = CosineAnnealing(
-                optimizer=self.optim_d, max_steps=max_steps, min_lr=self._cfg.hifigan.sched.min_lr,
+                optimizer=self.optim_d, max_steps=max_steps, min_lr=self._cfg.hifigan.model.sched.min_lr,
             )
             sch2_dict = {
                 'scheduler': self.scheduler_d,
