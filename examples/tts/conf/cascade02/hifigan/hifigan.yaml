@@ -1,11 +1,11 @@
 name: "HifiGan"
-train_dataset: ???
-validation_datasets: ???
+#train_dataset: ???
+#validation_datasets: ???
 
 defaults:
   - model/generator: v1
-  - model/train_ds: train_ds
-  - model/validation_ds: val_ds
+#  - model/train_ds: train_ds
+#  - model/validation_ds: val_ds
 
 model:
   preprocessor:
