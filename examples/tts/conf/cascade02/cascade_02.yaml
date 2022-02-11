@@ -6,6 +6,13 @@ defaults:
   - fastpitch_align/model/validation_ds@validation_ds
   - hifigan/hifigan@hifigan # datasets of hifigan are not used
 
+train_dataset: ???
+validation_datasets: ???
+sup_data_path: ???
+
+phoneme_dict_path: "scripts/tts_dataset_files/cmudict-0.7b"
+heteronyms_path: "scripts/tts_dataset_files/heteronyms-030921"
+whitelist_path: "nemo_text_processing/text_normalization/en/data/whitelist_lj_speech.tsv"
 
 trainer:
   devices: 1 # number of gpus
