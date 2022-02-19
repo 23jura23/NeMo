@@ -558,6 +558,9 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
 
         super().__init__(cfg=cfg, trainer=trainer)
 
+        self.setup_training_data(cfg=cfg.fastpitch.train_ds)
+        self.setup_validation_data(cfg=cfg.fastpitch.validation_ds)
+
         # fastpitch part
 
         self.learn_alignment = False
