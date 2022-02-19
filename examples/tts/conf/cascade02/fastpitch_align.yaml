@@ -77,8 +77,8 @@ model:
         pad_with_space: True
         g2p:
           _target_: "nemo.collections.tts.torch.g2ps.EnglishG2p"
-          phoneme_dict: ${phoneme_dict_path}
-          heteronyms: ${heteronyms_path}
+          phoneme_dict: ${fastpitch.phoneme_dict_path}
+          heteronyms: ${fastpitch.heteronyms_path}
 
     dataloader_params:
       drop_last: false
@@ -135,8 +135,8 @@ model:
         pad_with_space: True
         g2p:
           _target_: "nemo.collections.tts.torch.g2ps.EnglishG2p"
-          phoneme_dict: ${phoneme_dict_path}
-          heteronyms: ${heteronyms_path}
+          phoneme_dict: ${fastpitch.phoneme_dict_path}
+          heteronyms: ${fastpitch.heteronyms_path}
 
     dataloader_params:
       drop_last: false
