@@ -1158,6 +1158,8 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         self.log("g_l1_loss", loss_mel, prog_bar=True, logger=False, sync_dist=True)
 
     def validation_step(self, batch, batch_idx):
+        return None
+
         if self.input_as_mel:
             audio, audio_len, audio_mel = batch
             audio_mel_len = [audio_mel.shape[1]] * audio_mel.shape[0]
