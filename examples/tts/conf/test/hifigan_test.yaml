@@ -15,7 +15,7 @@ val_ds:
   dataloader_params:
     drop_last: false
     shuffle: false
-    batch_size: 16
+    batch_size: 4
     num_workers: 1
 
 trainer:

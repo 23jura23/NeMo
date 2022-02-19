@@ -4,6 +4,8 @@ from nemo.collections.tts.models import HifiGanModel
 from nemo.core.config import hydra_runner
 from nemo.utils.exp_manager import exp_manager
 
+from hydra.utils import instantiate
+
 @hydra_runner(config_path="../conf/test", config_name="hifigan_test")
 def main(cfg):
     trainer = pl.Trainer(**cfg.trainer)
@@ -13,10 +15,18 @@ def main(cfg):
 
     if cfg.pretrained:
         model = HifiGanModel.from_pretrained(model_name='tts_hifigan').eval()
+#         model._cfg.validation_ds = cfg.val_ds
     else:
-        model = HifiGanModel.restore_from(cfg.checkpoint).eval()
-
+        model = HifiGanModel.restore_from(cfg.checkpoint).eval()    
+    
+#     print(model._cfg)
+#     model.setup_training_data(cfg.val_ds)
     model.setup_validation_data(cfg.val_ds)
+#     print(model._cfg)
+    
+#     print()
+#     print(type(model._validation_dl.dataset))
+    
     model.set_trainer(trainer)
     trainer.validate(model)
 
