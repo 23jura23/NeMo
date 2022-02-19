@@ -684,7 +684,7 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
             return self._normalizer
 
         if self.learn_alignment:
-            ds_class_name = self._cfg.fastpitch.train_ds.dataset._target_.split(".")[-1]
+            ds_class_name = self._cfg.fastpitch.model.train_ds.dataset._target_.split(".")[-1]
 
             if ds_class_name == "AudioToCharWithPriorAndPitchDataset":
                 logging.warning(
@@ -693,14 +693,14 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
                 )
                 self._normalizer = lambda x: x
             elif ds_class_name == "TTSDataset":
-                if "text_normalizer" not in self._cfg.fastpitch.train_ds.dataset:
+                if "text_normalizer" not in self._cfg.fastpitch.model.train_ds.dataset:
                     self._normalizer = lambda x: x
                 else:
-                    normalizer = instantiate(self._cfg.fastpitch.train_ds.dataset.text_normalizer)
+                    normalizer = instantiate(self._cfg.fastpitch.model.train_ds.dataset.text_normalizer)
                     text_normalizer_call = normalizer.normalize
                     text_normalizer_call_args = {}
-                    if "text_normalizer_call_args" in self._cfg.fastpitch.train_ds.dataset:
-                        text_normalizer_call_args = self._cfg.fastpitch.train_ds.dataset.text_normalizer_call_args
+                    if "text_normalizer_call_args" in self._cfg.fastpitch.model.train_ds.dataset:
+                        text_normalizer_call_args = self._cfg.fastpitch.model.train_ds.dataset.text_normalizer_call_args
                     self._normalizer = lambda text: text_normalizer_call(text, **text_normalizer_call_args)
             else:
                 raise ValueError(f"Unknown dataset class: {ds_class_name}")
@@ -716,7 +716,7 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
             return self._parser
 
         if self.learn_alignment:
-            ds_class_name = self._cfg.fastpitch.train_ds.dataset._target_.split(".")[-1]
+            ds_class_name = self._cfg.fastpitch.model.train_ds.dataset._target_.split(".")[-1]
 
             if ds_class_name == "AudioToCharWithPriorAndPitchDataset":
                 logging.warning(
@@ -724,17 +724,17 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
                     "Please change your model to use Torch TTS Collection instead (e.g. see nemo.collections.tts.torch.data.TTSDataset)."
                 )
                 if self.vocab is None:
-                    self.vocab = AudioToCharWithDursF0Dataset.make_vocab(**self._cfg.fastpitch.train_ds.dataset.vocab)
+                    self.vocab = AudioToCharWithDursF0Dataset.make_vocab(**self._cfg.fastpitch.model.train_ds.dataset.vocab)
                 self._parser = self.vocab.encode
             elif ds_class_name == "TTSDataset":
-                tokenizer = instantiate(self._cfg.fastpitch.train_ds.dataset.text_tokenizer)
+                tokenizer = instantiate(self._cfg.fastpitch.model.train_ds.dataset.text_tokenizer)
                 self._parser = tokenizer.encode
             else:
                 raise ValueError(f"Unknown dataset class: {ds_class_name}")
         else:
             # cfg.train_ds.dataset._target_ == "nemo.collections.asr.data.audio_to_text.FastPitchDataset"
             self._parser = parsers.make_parser(
-                labels=self._cfg.fastpitch.labels,
+                labels=self._cfg.fastpitch.model.labels,
                 name='en',
                 unk_id=-1,
                 blank_id=-1,
@@ -777,8 +777,8 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         )
 
     def _get_warmup_steps(self, max_steps):
-        warmup_steps = self._cfg.hifigan.sched.get("warmup_steps", None)
-        warmup_ratio = self._cfg.hifigan.sched.get("warmup_ratio", None)
+        warmup_steps = self._cfg.hifigan.model.sched.get("warmup_steps", None)
+        warmup_ratio = self._cfg.hifigan.model.sched.get("warmup_ratio", None)
 
         if warmup_steps is not None and warmup_ratio is not None:
             raise ValueError(f'Either use warmup_steps or warmup_ratio for scheduler')
