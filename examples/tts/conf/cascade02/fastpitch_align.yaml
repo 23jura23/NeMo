@@ -75,7 +75,10 @@ model:
         sep: '|'
         add_blank_at: null
         pad_with_space: True
-        g2p: null # initialized later by cascade model
+        g2p:
+          _target_: "nemo.collections.tts.torch.g2ps.EnglishG2p"
+          phoneme_dict: ${phoneme_dict_path}
+          heteronyms: ${heteronyms_path}
 
     dataloader_params:
       drop_last: false
@@ -130,7 +133,10 @@ model:
         sep: '|'
         add_blank_at: null
         pad_with_space: True
-        g2p: null # initialized later by cascade model
+        g2p:
+          _target_: "nemo.collections.tts.torch.g2ps.EnglishG2p"
+          phoneme_dict: ${phoneme_dict_path}
+          heteronyms: ${heteronyms_path}
 
     dataloader_params:
       drop_last: false
