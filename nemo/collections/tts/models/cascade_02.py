@@ -1079,8 +1079,8 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         # if in finetune mode the mels are pre-computed using a
         # spectrogram generator
 
-        audio_mel = mels_pred
-        audio_len = audio_lens
+        audio_mel = mels_pred.detach()
+        audio_len = audio_lens.detach()
 
         # if self.input_as_mel:
         #     audio, audio_len, audio_mel = batch
