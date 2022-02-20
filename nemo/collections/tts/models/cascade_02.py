@@ -1079,8 +1079,8 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         # if in finetune mode the mels are pre-computed using a
         # spectrogram generator
 
-        audio_mel = mels_pred.detach()
-        audio_len = audio_lens.detach()
+#        audio_mel = mels_pred.detach()
+#        audio_len = audio_lens.detach()
 
         # if self.input_as_mel:
         #     audio, audio_len, audio_mel = batch
@@ -1091,8 +1091,8 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         #     audio_mel, _ = self.audio_to_melspec_precessor(audio, audio_len)
 
         # mel as input for L1 mel loss
-        audio_trg_mel, _ = self.trg_melspec_fn(audio, audio_len)
-        audio = audio.unsqueeze(1)
+#        audio_trg_mel, _ = self.trg_melspec_fn(audio, audio_len)
+#        audio = audio.unsqueeze(1)
 
         # here we have 2 options: learn by fastpitch's mels, and by target mels (from the audio). I think we should choose 1 variant?
 
@@ -1102,34 +1102,35 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
         #         текст  - >  сгенерированный мел                мел сгенерированного аудио
 
 
-        audio_pred = self.generator(x=audio_mel)
-        audio_pred_mel, _ = self.trg_melspec_fn(audio_pred.squeeze(1), audio_len)
+#        audio_pred = self.generator(x=audio_mel)
+#        audio_pred_mel, _ = self.trg_melspec_fn(audio_pred.squeeze(1), audio_len)
 
         # train discriminator
-        self.optim_d.zero_grad()
-        mpd_score_real, mpd_score_gen, _, _ = self.mpd(y=audio, y_hat=audio_pred.detach())
-        loss_disc_mpd, _, _ = self.discriminator_loss(
-            disc_real_outputs=mpd_score_real, disc_generated_outputs=mpd_score_gen
-        )
-        msd_score_real, msd_score_gen, _, _ = self.msd(y=audio, y_hat=audio_pred.detach())
-        loss_disc_msd, _, _ = self.discriminator_loss(
-            disc_real_outputs=msd_score_real, disc_generated_outputs=msd_score_gen
-        )
-        loss_d = loss_disc_msd + loss_disc_mpd
-        self.manual_backward(loss_d)
-        self.optim_d.step()
+#        self.optim_d.zero_grad()
+#        mpd_score_real, mpd_score_gen, _, _ = self.mpd(y=audio, y_hat=audio_pred.detach())
+#        loss_disc_mpd, _, _ = self.discriminator_loss(
+#            disc_real_outputs=mpd_score_real, disc_generated_outputs=mpd_score_gen
+#        )
+#        msd_score_real, msd_score_gen, _, _ = self.msd(y=audio, y_hat=audio_pred.detach())
+#        loss_disc_msd, _, _ = self.discriminator_loss(
+#            disc_real_outputs=msd_score_real, disc_generated_outputs=msd_score_gen
+#        )
+#        loss_d = loss_disc_msd + loss_disc_mpd
+#        self.manual_backward(loss_d)
+#        self.optim_d.step()
 
         # train generator
         self.optim_g.zero_grad()
-        loss_mel = F.l1_loss(audio_pred_mel, audio_trg_mel)
-        _, mpd_score_gen, fmap_mpd_real, fmap_mpd_gen = self.mpd(y=audio, y_hat=audio_pred)
-        _, msd_score_gen, fmap_msd_real, fmap_msd_gen = self.msd(y=audio, y_hat=audio_pred)
-        loss_fm_mpd = self.feature_loss(fmap_r=fmap_mpd_real, fmap_g=fmap_mpd_gen)
-        loss_fm_msd = self.feature_loss(fmap_r=fmap_msd_real, fmap_g=fmap_msd_gen)
-        loss_gen_mpd, _ = self.generator_loss(disc_outputs=mpd_score_gen)
-        loss_gen_msd, _ = self.generator_loss(disc_outputs=msd_score_gen)
-        loss_g = loss_gen_msd + loss_gen_mpd + loss_fm_msd + loss_fm_mpd + loss_mel * self.l1_factor
+#        loss_mel = F.l1_loss(audio_pred_mel, audio_trg_mel)
+#        _, mpd_score_gen, fmap_mpd_real, fmap_mpd_gen = self.mpd(y=audio, y_hat=audio_pred)
+#        _, msd_score_gen, fmap_msd_real, fmap_msd_gen = self.msd(y=audio, y_hat=audio_pred)
+#        loss_fm_mpd = self.feature_loss(fmap_r=fmap_mpd_real, fmap_g=fmap_mpd_gen)
+#        loss_fm_msd = self.feature_loss(fmap_r=fmap_msd_real, fmap_g=fmap_msd_gen)
+#        loss_gen_mpd, _ = self.generator_loss(disc_outputs=mpd_score_gen)
+#        loss_gen_msd, _ = self.generator_loss(disc_outputs=msd_score_gen)
+#        loss_g = loss_gen_msd + loss_gen_mpd + loss_fm_msd + loss_fm_mpd + loss_mel * self.l1_factor
 
+        loss_g = 0
         loss_g += loss  # add fastpitch's loss to generator
 
         self.manual_backward(loss_g)
@@ -1142,20 +1143,20 @@ class Cascade02(TextToWaveform, Exportable): # , Exportable
             sch1.step()
             sch2.step()
 
-        metrics = {
-            "g_loss_fm_mpd": loss_fm_mpd,
-            "g_loss_fm_msd": loss_fm_msd,
-            "g_loss_gen_mpd": loss_gen_mpd,
-            "g_loss_gen_msd": loss_gen_msd,
-            "g_loss": loss_g,
-            "d_loss_mpd": loss_disc_mpd,
-            "d_loss_msd": loss_disc_msd,
-            "d_loss": loss_d,
-            "global_step": self.global_step,
-            "lr": self.optim_g.param_groups[0]['lr'],
-        }
-        self.log_dict(metrics, on_step=True, sync_dist=True)
-        self.log("g_l1_loss", loss_mel, prog_bar=True, logger=False, sync_dist=True)
+#        metrics = {
+#            "g_loss_fm_mpd": loss_fm_mpd,
+#            "g_loss_fm_msd": loss_fm_msd,
+#            "g_loss_gen_mpd": loss_gen_mpd,
+#            "g_loss_gen_msd": loss_gen_msd,
+#            "g_loss": loss_g,
+#            "d_loss_mpd": loss_disc_mpd,
+#            "d_loss_msd": loss_disc_msd,
+#            "d_loss": loss_d,
+#            "global_step": self.global_step,
+#            "lr": self.optim_g.param_groups[0]['lr'],
+#        }
+#        self.log_dict(metrics, on_step=True, sync_dist=True)
+#        self.log("g_l1_loss", loss_mel, prog_bar=True, logger=False, sync_dist=True)
 
     def validation_step(self, batch, batch_idx):
         return None
